@@ -1,4 +1,6 @@
-&copy; Josh Elser 2018
+Copyright Josh Elser 2018
+
+Licensed permissively via the [Apache Software License v2](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
 ## Apache ZooKeeper Load Generation Tool
 
