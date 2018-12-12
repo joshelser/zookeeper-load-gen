@@ -13,10 +13,12 @@ public class LoadGenerator implements Runnable {
 
   private final LoadGeneratorOpts opts;
   private final JCommander parser;
+  private final String[] args;
 
-  public LoadGenerator(LoadGeneratorOpts opts, JCommander parser) {
+  public LoadGenerator(LoadGeneratorOpts opts, JCommander parser, String[] args) {
     this.opts = requireNonNull(opts);
     this.parser = requireNonNull(parser);
+    this.args = requireNonNull(args);
   }
 
   public void run() {
@@ -38,6 +40,8 @@ public class LoadGenerator implements Runnable {
 
       // Pass configuration down into the Operation
       op.configure(parser);
+      // Then call parse to get all of the configuration parsing done
+      parser.parse(args);
 
       for (long i = 0; i < numOps; i++) {
         if (i % 1000 == 0) {
@@ -60,7 +64,7 @@ public class LoadGenerator implements Runnable {
     final LoadGeneratorOpts opts = new LoadGeneratorOpts();
     JCommander jcommander = new JCommander();
     jcommander.addObject(opts);
-    LoadGenerator generator = new LoadGenerator(opts, jcommander);
+    LoadGenerator generator = new LoadGenerator(opts, jcommander, args);
     generator.run();
   }
 
