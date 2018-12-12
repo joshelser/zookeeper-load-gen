@@ -1,4 +1,4 @@
-&copyright; Josh Elser 2018
+&copy; Josh Elser 2018
 
 ## Apache ZooKeeper Load Generation Tool
 
