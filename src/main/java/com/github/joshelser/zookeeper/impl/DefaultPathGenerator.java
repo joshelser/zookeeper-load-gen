@@ -22,7 +22,7 @@ import com.github.joshelser.zookeeper.impl.DefaultPathGenerator.DefaultPathGener
 public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorOpts> {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPathGenerator.class);
 
-  private class ZNodePathValidator implements IParameterValidator {
+  public static class ZNodePathValidator implements IParameterValidator {
     @Override public void validate(String name, String value) throws ParameterException {
       if (!value.startsWith("/")) {
         throw new ParameterException("Parameter " + name + " does not begin with a slash.");
@@ -33,7 +33,7 @@ public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorO
     }
   }
 
-  private class NonZeroPositiveInteger implements IParameterValidator {
+  public static class NonZeroPositiveInteger implements IParameterValidator {
     public void validate(String name, String value) throws ParameterException {
       Integer i = Integer.parseInt(value);
       if (i < 1) {
