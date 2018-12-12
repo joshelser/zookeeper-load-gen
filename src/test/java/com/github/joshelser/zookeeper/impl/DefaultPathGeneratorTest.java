@@ -12,8 +12,8 @@ public class DefaultPathGeneratorTest {
 
   @Test public void testSimplePathGeneration() {
     DefaultPathGeneratorOpts opts = new DefaultPathGeneratorOpts();
-    PathGenerator gen = new DefaultPathGenerator();
-    gen.configure(new String[] {});
+    DefaultPathGenerator gen = new DefaultPathGenerator();
+    gen.initialize(opts);
 
     ArrayList<String> expectedPaths = new ArrayList<>();
     ArrayList<String> actualPaths = new ArrayList<>();
@@ -28,8 +28,7 @@ public class DefaultPathGeneratorTest {
     DefaultPathGeneratorOpts opts = new DefaultPathGeneratorOpts();
     opts.rootZNode = "/foo";
     DefaultPathGenerator gen = new DefaultPathGenerator();
-    gen.configure(new String[] {});
-    gen.setOpts(opts);
+    gen.initialize(opts);
 
     assertEquals("/foo/0000/00000000", gen.generatePath());
   }
@@ -39,8 +38,7 @@ public class DefaultPathGeneratorTest {
     // Maximum of 5 nodes at the "leaf" level
     opts.maxSecondLevelChildren = 5;
     DefaultPathGenerator gen = new DefaultPathGenerator();
-    gen.configure(new String[] {});
-    gen.setOpts(opts);
+    gen.initialize(opts);
 
     // Generate the expected paths
     ArrayList<String> expectedPaths = new ArrayList<>();
@@ -66,8 +64,7 @@ public class DefaultPathGeneratorTest {
     // Only allowed to have 2 root nodes
     opts.maxTopLevelChildren = 2;
     DefaultPathGenerator gen = new DefaultPathGenerator();
-    gen.configure(new String[] {});
-    gen.setOpts(opts);
+    gen.initialize(opts);
 
     // Generate the expected paths
     ArrayList<String> expectedPaths = new ArrayList<>();

@@ -16,7 +16,7 @@ public class ConstantSizeRandomDataGeneratorTest {
     ConstantSizeRandomDataGeneratorOpts opts = new ConstantSizeRandomDataGeneratorOpts();
     ConstantSizeRandomDataGenerator gen = new ConstantSizeRandomDataGenerator();
 
-    gen.configure(new String[0]);
+    gen.initialize(opts);
     byte[] data = gen.generateData();
     assertEquals(opts.sizeInBytes, data.length);
 
@@ -26,8 +26,10 @@ public class ConstantSizeRandomDataGeneratorTest {
 
   @Test
   public void testDataGenerationLength() {
+    ConstantSizeRandomDataGeneratorOpts opts = new ConstantSizeRandomDataGeneratorOpts();
+    opts.sizeInBytes = 10;
     ConstantSizeRandomDataGenerator gen = new ConstantSizeRandomDataGenerator();
-    gen.configure(new String[] {"--size", "10"});
+    gen.initialize(opts);
     byte[] data = gen.generateData();
     assertEquals(10, data.length);
   }

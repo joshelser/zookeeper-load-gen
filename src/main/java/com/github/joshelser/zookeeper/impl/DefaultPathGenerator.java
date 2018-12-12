@@ -10,8 +10,9 @@ import com.beust.jcommander.IParameterValidator;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.github.joshelser.zookeeper.impl.DefaultPathGenerator.DefaultPathGeneratorOpts;
 
-public class DefaultPathGenerator implements PathGenerator {
+public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorOpts> {
 
   private class ZNodePathValidator implements IParameterValidator {
     @Override public void validate(String name, String value) throws ParameterException {
@@ -48,26 +49,22 @@ public class DefaultPathGenerator implements PathGenerator {
   }
 
   private DefaultPathGeneratorOpts opts = null;
-  private Map<String,AtomicLong> topLevelChildren;
+  private Map<String,AtomicLong> topLevelChildren = null;
   private String currentTopLevelChild = null;
 
   @Override
-  public synchronized void configure(String[] args) {
-    if (opts != null) {
-      throw new IllegalStateException("Configure was called on DefaultPathGenerator multiple times");
-    }
+  public  void configure(JCommander parser) {
     DefaultPathGeneratorOpts opts = new DefaultPathGeneratorOpts();
-    JCommander jc = new JCommander();
-    jc.addObject(opts);
-    jc.parse(args);
-
-    this.opts = opts;
-    this.topLevelChildren = new HashMap<>();
+    parser.addObject(opts);
+    initialize(opts);
   }
 
-  // visible for testing
-  void setOpts(DefaultPathGeneratorOpts opts) {
+  public synchronized void initialize(DefaultPathGeneratorOpts opts) {
+    if (this.opts != null || topLevelChildren != null || currentTopLevelChild != null) {
+      throw new IllegalStateException("Configure was called on DefaultPathGenerator multiple times");
+    }
     this.opts = requireNonNull(opts);
+    this.topLevelChildren = new HashMap<>();
   }
 
   @Override

@@ -28,22 +28,20 @@ public class CreateOperation implements Operation {
   private PathGenerator pathGenerator = null;
 
   @Override
-  public synchronized void configure(String[] args) {
+  public synchronized void configure(JCommander parser) {
     if (opts != null || dataGenerator != null || pathGenerator != null) {
       throw new IllegalStateException("Configure was called on CreateOperationOpts multiple times");
     }
     this.opts = new CreateOperationOpts();
-    JCommander jcommander = new JCommander();
-    jcommander.addObject(opts);
-    jcommander.parse(args);
+    parser.addObject(opts);
 
     // Get and configure the DataGenerator
     this.dataGenerator = opts.dataGenerator;
-    this.dataGenerator.configure(args);
+    this.dataGenerator.configure(parser);
 
     // Get and configure the PathGenerator
     this.pathGenerator = opts.pathGenerator;
-    this.pathGenerator.configure(args);
+    this.pathGenerator.configure(parser);
   }
 
   @Override

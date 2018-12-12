@@ -1,8 +1,18 @@
 package com.github.joshelser.zookeeper.impl;
 
-public interface PathGenerator {
+import com.beust.jcommander.JCommander;
 
-  void configure(String[] args);
+public interface PathGenerator<T> {
+
+  /**
+   * Configures this generator from CLI arguments.
+   */
+  void configure(JCommander parser);
+
+  /**
+   * Initializes this generator with the given options
+   */
+  void initialize(T opts);
 
   /**
    * Generates the name of a znode to provide to an operation.
