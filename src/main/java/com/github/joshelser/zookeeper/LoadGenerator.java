@@ -47,7 +47,7 @@ public class LoadGenerator implements Runnable {
     try {
       for (long i = 0; i < numOps; i++) {
         if (i % 1000 == 0) {
-          LOG.debug("Executing operation {}", i);
+          LOG.info("Executing operation {}", i);
         }
         try {
           op.call(zk);
