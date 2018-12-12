@@ -1,5 +1,7 @@
 package com.github.joshelser.zookeeper.impl;
 
+import java.util.Arrays;
+
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -62,7 +64,17 @@ public class CreateOperation implements Operation {
         zk.create(path, data, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
         return;
       } catch (KeeperException.NodeExistsException e) {
-        throw new IllegalStateException("The path to create already exists: " + path);
+        // The write could have been successful but we failed before we returned successfully
+        // See if the data we wanted to write is already there. If it is, we're good.
+        try {
+          byte[] dataPresent = zk.getData(path, false, null);
+          if (Arrays.equals(dataPresent, data)) {
+            return;
+          }
+          throw new IllegalStateException("The path to create already exists but with different data: " + path);
+        } catch (KeeperException e1) {
+          throw new RuntimeException("Failed to compare data of node we didn't expect to exist", e);
+        }
       } catch (KeeperException e) {
         // continue
         LOG.debug("Retrying on non-fatal ZK exception", e);
