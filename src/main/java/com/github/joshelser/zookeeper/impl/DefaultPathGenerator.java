@@ -6,6 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZooDefs.Ids;
+import org.apache.zookeeper.ZooKeeper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.beust.jcommander.IParameterValidator;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -13,6 +20,7 @@ import com.beust.jcommander.ParameterException;
 import com.github.joshelser.zookeeper.impl.DefaultPathGenerator.DefaultPathGeneratorOpts;
 
 public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorOpts> {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPathGenerator.class);
 
   private class ZNodePathValidator implements IParameterValidator {
     @Override public void validate(String name, String value) throws ParameterException {
@@ -53,10 +61,10 @@ public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorO
   private String currentTopLevelChild = null;
 
   @Override
-  public  void configure(JCommander parser) {
+  public DefaultPathGeneratorOpts configure(JCommander parser) {
     DefaultPathGeneratorOpts opts = new DefaultPathGeneratorOpts();
     parser.addObject(opts);
-    initialize(opts);
+    return opts;
   }
 
   public synchronized void initialize(DefaultPathGeneratorOpts opts) {
@@ -68,8 +76,8 @@ public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorO
   }
 
   @Override
-  public String generatePath() {
-    String currentPath = findNextPath();
+  public String generatePath(ZooKeeper zk) {
+    String currentPath = findNextPath(zk);
 
     // Could not generate a new path
     if (currentPath == null) {
@@ -79,20 +87,40 @@ public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorO
     return join(opts.rootZNode, currentPath);
   }
 
-  public String createAndStoreNewTopLevelChild() {
+  public String getRootZNode() {
+    return opts.rootZNode;
+  }
+
+  public String createAndStoreNewTopLevelChild(ZooKeeper zk) {
     int nextChild = topLevelChildren.size();
     if (nextChild >= opts.maxTopLevelChildren) {
       return null;
     }
     String child = String.format("%04d", nextChild);
     topLevelChildren.put(child, new AtomicLong(0L));
+    String fullPath = join(opts.rootZNode, child);
+    ensureNodeExists(zk, fullPath);
     return child;
   }
 
-  public String findNextPath() {
+  void ensureNodeExists(ZooKeeper zk, String path) {
+    try {
+      if (zk.exists(path, false) == null) {
+        zk.create(path, new byte[0], Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return;
+    } catch (KeeperException e) {
+      LOG.error("Failed to create first-level ZNode: {}", path, e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  public String findNextPath(ZooKeeper zk) {
     if (currentTopLevelChild == null) {
       if (topLevelChildren.isEmpty()) {
-        currentTopLevelChild = createAndStoreNewTopLevelChild();
+        currentTopLevelChild = createAndStoreNewTopLevelChild(zk);
       } else {
         // If we have no currentTopLevelChild, that means a previous call here
         // returned null (indicating that no more children should be created).
@@ -102,7 +130,7 @@ public class DefaultPathGenerator implements PathGenerator<DefaultPathGeneratorO
     AtomicLong numChildren = topLevelChildren.get(currentTopLevelChild);
     if (numChildren.longValue() >= opts.maxSecondLevelChildren) {
       // We maxed out the current child. Create the next and reset the number of children
-      currentTopLevelChild = createAndStoreNewTopLevelChild();
+      currentTopLevelChild = createAndStoreNewTopLevelChild(zk);
       if (currentTopLevelChild == null) {
         // We exceeded the number of top leve children, bail out.
         return null;

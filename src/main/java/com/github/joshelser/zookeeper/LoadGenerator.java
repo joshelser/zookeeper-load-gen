@@ -2,6 +2,8 @@ package com.github.joshelser.zookeeper;
 
 import static java.util.Objects.requireNonNull;
 
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,13 +13,15 @@ import com.beust.jcommander.JCommander;
 public class LoadGenerator implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LoadGenerator.class);
 
+  private static class NoOpWatcher implements Watcher {
+    @Override public void process(WatchedEvent event) {}
+  }
+
   private final LoadGeneratorOpts opts;
-  private final JCommander parser;
   private final String[] args;
 
-  public LoadGenerator(LoadGeneratorOpts opts, JCommander parser, String[] args) {
+  public LoadGenerator(LoadGeneratorOpts opts, String[] args) {
     this.opts = requireNonNull(opts);
-    this.parser = requireNonNull(parser);
     this.args = requireNonNull(args);
   }
 
@@ -33,16 +37,14 @@ public class LoadGenerator implements Runnable {
   }
 
   void runWithExceptions() throws Exception {
-    final ZooKeeper zk = new ZooKeeper(opts.getZooKeeperQuorum(), opts.getConnectionTimeout(), null);
+    final Operation op = opts.getOperation();
+    final long numOps = opts.getNumOperations();
+
+    // Make sure the Operation's state is initialized too
+    op.initialize(args);
+
+    final ZooKeeper zk = new ZooKeeper(opts.getZooKeeperQuorum(), opts.getConnectionTimeout(), new NoOpWatcher());
     try {
-      final Operation op = opts.getOperation();
-      final long numOps = opts.getNumOperations();
-
-      // Pass configuration down into the Operation
-      op.configure(parser);
-      // Then call parse to get all of the configuration parsing done
-      parser.parse(args);
-
       for (long i = 0; i < numOps; i++) {
         if (i % 1000 == 0) {
           LOG.debug("Executing operation {}", i);
@@ -63,8 +65,13 @@ public class LoadGenerator implements Runnable {
   public static void main(String[] args) {
     final LoadGeneratorOpts opts = new LoadGeneratorOpts();
     JCommander jcommander = new JCommander();
+    // LoadGenerator doesn't know about the options for the Operation (and its members)
+    // so we might see options we don't know how to handle.
+    jcommander.setAcceptUnknownOptions(true);
     jcommander.addObject(opts);
-    LoadGenerator generator = new LoadGenerator(opts, jcommander, args);
+    // Need to do a parse to fill out the LoadGeneratorOpts object.
+    jcommander.parse(args);
+    LoadGenerator generator = new LoadGenerator(opts, args);
     generator.run();
   }
 

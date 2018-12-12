@@ -21,10 +21,10 @@ public class ConstantSizeRandomDataGenerator implements DataGenerator<ConstantSi
   private Random random = null;
 
   @Override
-  public void configure(JCommander parser) {
+  public ConstantSizeRandomDataGeneratorOpts configure(JCommander parser) {
     ConstantSizeRandomDataGeneratorOpts opts = new ConstantSizeRandomDataGeneratorOpts();
     parser.addObject(opts);
-    initialize(opts);
+    return opts;
   }
 
   // Visible for testing, to be used instead of configure()

@@ -7,10 +7,10 @@ public interface DataGenerator<T> {
   /**
    * Configures this generator from CLI arguments
    */
-  void configure(JCommander parser);
+  T configure(JCommander parser);
 
   /**
-   * Configures this generator with the given options
+   * Initializes this generator with the given configuration
    */
   void initialize(T opts);
 
